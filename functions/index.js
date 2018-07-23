@@ -19,7 +19,7 @@ app.intent('MoveTray', (conv, {start, end}) => {
     //var startString = start[0].location + " " + start[0].number + " ";
     //var botNum = 0;
 
-    reqRunner()
+    reqRunner(start, end);
     //findFreeBot();
     //moveRequest(start, end, botNum);
     //incrementCounter(botNum);
@@ -28,9 +28,11 @@ app.intent('MoveTray', (conv, {start, end}) => {
 });
 
 
-var reqRunner = async (() => {
+var reqRunner = async ((start, end) => {
     let freeBot = await (findFreeBot());
-    return;
+    Promise.all([moveRequest(start, end, freeBot), incrementCounter(freeBot)]).catch(err =>{
+        error(err);
+    });
 });
 
 
@@ -41,8 +43,13 @@ function moveRequest(start, end, botNum) {
         bot: botNum
     };
     console.log("about to write to database");
-
-    return db.collection('moveRequests').add(moveData);
+    return new Promise((resolve, reject) => {
+        try{
+            resolve(db.collection('moveRequests').add(moveData));
+        }catch(err){
+            reject(err);
+        }
+    });
 }
 
 function findFreeBot() {
