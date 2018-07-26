@@ -5,7 +5,6 @@ const {
 } = require('actions-on-google');
 const admin = require('firebase-admin');
 const functions = require('firebase-functions');
-const maxBots = 3;
 var async = require('asyncawait/async');
 var await = require('asyncawait/await');
 
@@ -16,13 +15,19 @@ const app = dialogflow({
     debug: true
 });
 
-app.intent('MoveTray', (conv, {
-    start,
-    end
-}) => {
+app.intent('MoveTray', (conv, {start, end}) => {
+    end = (end === "me") ? {"location": "me"}: end;
+
     reqRunner(start, end);
-    conv.close("Ight we done");
+
+    var startStr = startFormat(start);
+
+    var endStr = endFormat(end);
+    
+
+    conv.close("Ok, I have assigned a bot to move mail from " + startStr + " to " + endStr);
 });
+
 
 
 var reqRunner = async ((start, end) => {
@@ -32,6 +37,22 @@ var reqRunner = async ((start, end) => {
     });
 });
 
+function startFormat(start) {
+    var startStr = "";
+    for (var i = 0; i < start.length; i++) {
+        if (i !== 0)
+            startStr += " and "
+        startStr += start[i].location + " " + start[i].number;
+    }
+    return startStr;
+}
+
+function endFormat(end){
+    if (end.location === ("me"))
+        return "you";
+    else
+        return end.location + " " + end.number;
+}
 
 function moveRequest(start, end, botNum) {
     const moveData = {
@@ -39,7 +60,7 @@ function moveRequest(start, end, botNum) {
         end: end,
         bot: botNum
     };
-    console.log("about to write to database");
+    //console.log("about to write to database");
     return new Promise((resolve, reject) => {
         try {
             resolve(db.collection('moveRequests').add(moveData));
@@ -50,13 +71,13 @@ function moveRequest(start, end, botNum) {
 }
 
 function findFreeBot() {
-    console.log("FREEBOTCALLED");
+    //console.log("FREEBOTCALLED");
     var freeBotRef = db.collection('activeRequests').orderBy('count').limit(1);
 
     return new Promise((resolve, reject) => {
         var freeBot = freeBotRef.get().then(snapshot => {
                 snapshot.forEach(doc => {
-                    console.log(doc.data().botNum);
+                    //console.log(doc.data().botNum);
                     resolve(doc.data().botNum);
                 });
                 return;
