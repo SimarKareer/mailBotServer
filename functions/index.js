@@ -25,7 +25,7 @@ app.intent('MoveTray', (conv, {start, end}) => {
     var endStr = endFormat(end);
     
 
-    conv.close("Ok, I have assigned a bot to move mail from " + startStr + " to " + endStr);
+    conv.ask("Ok, I have assigned a bot to move mail from " + startStr + " to " + endStr);
 });
 
 
